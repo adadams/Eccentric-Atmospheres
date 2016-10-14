@@ -50,11 +50,8 @@ class MCMC:
         #Implement M-H algorithm to begin walking.
         for i in xrange(1, num_steps):
             print i
-            #The candidate position. Only accept those proposals which are acceptable by the priors.
-            prior_check = N.zeros((num_walkers, ndim))
-            while prior_check.any() == 0:
-                cand = N.array([[par*(1+N.random.randn()*step_size) for par in pos[i-1][j]] for j in range(num_walkers)])
-                prior_check = N.array([self.lnprior(c) for c in cand])
+            #The candidate position.
+            cand = N.array([[par*(1+N.random.randn()*step_size) for par in pos[i-1][j]] for j in range(num_walkers)])
 
             #Acceptance ratio.
             cand_prob = N.array([self.lnprob(c) for c in cand])
