@@ -1,0 +1,147 @@
+import numpy as N
+import astropy.units as U
+
+import datetime
+
+import matplotlib as mpl
+from matplotlib import pyplot as plt
+import matplotlib.animation as anim
+from mpl_toolkits.basemap import Basemap
+plt.rc('text', usetex=True)
+plt.rc('font', family='serif')
+plt.rcParams['animation.ffmpeg_path'] = '/usr/local/bin/ffmpeg'
+
+from orbit_plot import *
+
+###########################################################
+# Produces an orbital top-down view and a projection of surface temperatures, animated.
+# The planet parameters MUST be set or determined beforehand.
+########################################################### 
+def draw(planet_object, rotation_period, map_array):
+    
+    #The class that gets used in the animation routine to update the visualized data for each time step.
+    #The orbit points, star position, globe projection outline and temperature bounds are static.
+    #Only the projected temperature arrays and line connecting the star and the planet at its position need to be updated in time.
+    class UpdateFrames(object):
+        
+        #Initializes the temperature map and line from the star to the initial planet position.
+        def __init__(self, map_object, orbit_object):
+            self.map_array = map_array
+            self.m  = map_object
+            self.orbit_object = orbit_object
+            self.phi = planet_object.phis
+            self.theta = planet_object.thetas
+            #self.line = subsolar_line
+            #self.x_points = x_points
+            #self.y_points = y_points
+            self.times = planet_object.times
+            self.time_resolution = planet_object.time_resolution
+            
+            self.map_min = N.nanmin(self.map_array) / self.map_array.unit
+            self.map_max = N.nanmax(self.map_array) / self.map_array.unit
+            #Make sure the array you provide as an argument is unitless.
+            self.globemap = self.m.pcolor(self.phi/U.deg, self.theta/U.deg, self.map_array[0]/self.map_array.unit, cmap=plt.cm.jet, vmin=self.map_min, vmax=self.map_max, latlon=True)
+            
+            #The subsolar longitude on the planet and the line object for that longitude to be drawn on the map.
+            self.ss_long = (planet_object.subsolar_longitude(self.times[0], rotation_period=rotation_period)/U.deg).decompose()
+            self.subsolar_line = self.m.drawmeridians([self.ss_long], linewidth=3, dashes=[3,1])
+            #self.orbit_object.init()
+            
+            #The temperature legend.
+            cb = self.m.colorbar(self.globemap, "bottom", size="5%", pad="2%")
+            cb.set_label('Temperature (K)', size = 14)
+            plt.setp(plt.getp(cb.ax.axes, 'xticklabels'), rotation = 90, size = 12)
+            
+        def init(self):
+            self.globemap.set_array(N.asarray([]))
+            return self.globemap
+                
+        #Replaces the temperature map object and star-planet line with the appropriate ones for the desired time step (indexed by i).
+        def __call__(self, i):
+            #Remove the existing color map.
+            for c in self.globemap.findobj(): c.remove()
+
+            #Respecify the color map.
+            self.globemap = self.m.pcolor(self.phi/U.deg, self.theta/U.deg, self.map_array[i]/self.map_array.unit, cmap=plt.cm.jet, vmin=self.map_min, vmax=self.map_max, latlon=True)
+
+            #Remove the existing subsolar longitude line.
+            self.ss_keys = (self.subsolar_line).keys()
+            for key in self.ss_keys: del self.subsolar_line[key]
+
+            #Respecify the subsolar longitude line.
+            self.ss_long = (planet_object.subsolar_longitude(self.times[i], rotation_period=rotation_period)/U.deg).decompose()
+            self.subsolar_line = self.m.drawmeridians([self.ss_long], linewidth=3, dashes=[3,1])
+            #self.line.set_data([0, self.x_points[i%self.time_resolution]], [0, self.y_points[i%self.time_resolution]])
+            self.orbit_object.update(i)
+            #self.orbit_object.line.set_data([0, self.orbit_object.x_points[i%planet_object.time_resolution]], [0, self.orbit_object.y_points[i%planet_object.time_resolution]])
+                
+            return self.globemap
+
+    #Draw the dots outlining the orbit using eccentric and true anomalies.
+    #x_points = N.zeros(planet_object.time_resolution)
+    #y_points = N.zeros(planet_object.time_resolution)
+    
+    #for i, time in enumerate(planet_object.times[0:planet_object.time_resolution]):
+    #    E = planet_object.anomaly(time)['ecc']
+    #    f = planet_object.anomaly(time)['true']
+    #    cos_E = N.cos(E)
+    #    cos_f = N.cos(f)
+    #    sin_f = N.sin(f)
+    #    
+    #    x_points[i] = (1 - planet_object.e*cos_E) * cos_f
+    #    y_points[i] = (1 - planet_object.e*cos_E) * sin_f
+
+    #Convert the quantities plotted to units of AU.
+    #x_points = x_points * (planet_object.a / U.AU)
+    #y_points = y_points * (planet_object.a / U.AU)
+
+    #Set the minimum and maximum values of the color scale to those of the array used for the color map.
+    color_min = N.nanmin(map_array)
+    color_max = N.nanmax(map_array)
+    
+    fig, axarr = plt.subplots(1, 2)
+
+    
+    
+    #The orbital view. Draw points, subsolar longitude line, and labels.
+    #ax1 = fig.add_subplot(121)
+    
+    #orbit_points = axarr[0].scatter(x_points, y_points, color='black', s=4)
+    #star_point = axarr[0].scatter(0, 0, color='black', s=8)
+    #subsolar_line, = axarr[0].plot([0, x_points[0]], [0, y_points[0]], color='black', lw=1)
+    #plt.setp(plt.getp(axarr[0].axes, 'xticklabels'), rotation = 90, size = 12)
+    #plt.setp(plt.getp(axarr[0].axes, 'yticklabels'), size = 12)
+    #axarr[0].set_xlabel(r'$x$ (AU)', size=16)
+    #axarr[0].set_ylabel(r'$y$ (AU)', size=16)
+    #axarr[0].set_aspect('equal')
+    
+    #The surface temperature view. Call the Basemap routine to convert the pyplot "pcolor" color map to a projected map on a globe projection.
+    #ax2 = fig.add_subplot(122)
+
+    orbit_plot = OrbitPlot(planet_object)
+    orbit_plot.draw(axarr[0])
+    
+    plt.sca(axarr[1])
+    projected_map = Basemap(projection='hammer', resolution = 'h', lat_0=0, lon_0=0)
+    #projected_map.drawmeridians(N.arange(-180,180,10))
+    #projected_map.drawparallels(N.arange(-90,90,30))
+    
+    #Makes everything fit on the plot.
+    fig.tight_layout(pad=0.4, w_pad=0.5, h_pad=1.0)
+
+    #The object that tells the animation routine to update.
+    update_frames = UpdateFrames(projected_map, orbit_plot)
+
+
+
+    #The actual animation routine.
+    #animation = anim.FuncAnimation(fig, update_frames, init_func=update_frames.init,
+                                   #frames=planet_object.time_resolution*planet_object.num_orbits, blit=False)
+    animation = anim.FuncAnimation(fig, update_frames,
+                                   frames=planet_object.time_resolution*planet_object.num_orbits, blit=False)
+
+    #Codec to write the animation to file.
+    FFwriter = anim.FFMpegWriter()
+
+    #Save the animation.
+    animation.save('{0}_{1}.mp4'.format(datetime.date.today(), planet_object.name), metadata={'artist':'Arthur Adams'}, writer=FFwriter, extra_args=['-sameq'])
