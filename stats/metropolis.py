@@ -52,6 +52,10 @@ class MCMC:
             print i
             #The candidate position.
             cand = N.array([[par*(1+N.random.randn()*step_size) for par in pos[i-1][j]] for j in range(num_walkers)])
+            cand_check = N.array([self.lnprior(c) for c in cand])
+            while any(~N.isfinite(entry) for entry in cand_check):
+                cand = N.array([[par*(1+N.random.randn()*step_size) for par in pos[i-1][j]] for j in range(num_walkers)])
+                cand_check = N.array([self.lnprior(c) for c in cand])
 
             #Acceptance ratio.
             cand_prob = N.array([self.lnprob(c) for c in cand])
