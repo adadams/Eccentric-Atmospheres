@@ -45,6 +45,7 @@ class MCMC:
 
         #Set the initial position of each walker to the same value.
         pos[0] = N.tile(self.init_pos, (num_walkers,1))
+        print N.shape(pos[0])
         logls[0] = N.array([self.lnprob(c) for c in pos[0]]).reshape(num_walkers)
 
         #For simulated annealing we have 2 characteristic temperatures (high/low), where initially we allow many wild proposals, but gradually reduce the temperature such that the acceptances become much more conservative. We start by defining these temperature limits in terms of 2 characteristic acceptance probabilities.
@@ -58,10 +59,10 @@ class MCMC:
         for i in xrange(1, num_steps):
             print i
             #The candidate position.
-            cand = N.array([[par+par0*N.random.randn()*step_size for par, par0 in zip(pos[i-1][j], pos[0][j])] for j in range(num_walkers)])
+            cand = N.array([[par+par0*N.random.randn()*step for par, par0, step in zip(pos[i-1][j], pos[0][j], step_size)] for j in range(num_walkers)])
             cand_check = N.array([self.lnprior(c) for c in cand])
             while any(~N.isfinite(entry) for entry in cand_check):
-                cand = N.array([[par+par0*N.random.randn()*step_size for par, par0 in zip(pos[i-1][j], pos[0][j])] for j in range(num_walkers)])
+                cand = N.array([[par+par0*N.random.randn()*step for par, par0, step in zip(pos[i-1][j], pos[0][j], step_size)] for j in range(num_walkers)])
                 cand_check = N.array([self.lnprior(c) for c in cand])
 
             #Acceptance ratio.
