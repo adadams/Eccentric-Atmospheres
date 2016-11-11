@@ -20,6 +20,8 @@ class OrbitPlot:
         
         self.planet_object = planet_object
         self.line_rot = 2*N.pi * N.array((planet_object.times-planet_object.P/2) / rotation_period)
+        #This extra term is optional and allows the drawn line to point toward the star at the first periastron, to show the pseudosynchronicity of pseudosynchronous rotation.
+        self.line_rot += self.planet_object.subsolar_longitude(planet_object.times[planet_object.time_resolution/2], rotation_period)/U.rad - N.pi * planet_object.P / rotation_period
         self.anomaly = planet_object.anomaly(planet_object.times[0:planet_object.time_resolution])
         self.lum_angle = N.array(self.anomaly['true'].to(U.deg)/U.deg - 90)
 

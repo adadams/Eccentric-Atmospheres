@@ -51,8 +51,8 @@ class MCMC:
         #For simulated annealing we have 2 characteristic temperatures (high/low), where initially we allow many wild proposals, but gradually reduce the temperature such that the acceptances become much more conservative. We start by defining these temperature limits in terms of 2 characteristic acceptance probabilities.
         P0 = 0.7
         Pf = 0.001
-        T0 = -1 / N.log(P0)
-        Tf = -1 / N.log(Pf)
+        T0 = -0.03 / N.log(P0)
+        Tf = -0.03 / N.log(Pf)
         T = N.array([T0 * (Tf/T0 ** (i/(num_steps-1))) for i in range(num_steps)])
 
         #Implement M-H algorithm to begin walking.

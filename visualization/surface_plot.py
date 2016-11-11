@@ -58,7 +58,7 @@ class SurfacePlot:
         self.drawn_lines = self.projected_map.drawmeridians([ss_long], linewidth=3, dashes=[3,1])
             
     def update(self, i):
-        print i
+        print "{0}: {1}".format(i, self.long_obs[i])
         #Remove the existing color map.
         for c in self.globemap.findobj(): c.remove()
 

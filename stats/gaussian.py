@@ -70,6 +70,7 @@ def log_likelihood(planet_object, data, spectral_array, model_function, paramete
         model_interps[...,flag_transit] = model_function(parameter_mesh, spectral_array)['model'][...,transit_index,N.newaxis]
 
         #Sum up the log likelihoods over time.
+        print N.shape(0.5*((data['flux'] - model_interps)/data_spread)**2)
         log_likelihoods = N.einsum('...t->...', 0.5*((data['flux'] - model_interps)/data_spread)**2)
 
     #Return the index in the likelihood array corresponding to the smallest (most favorable) value.

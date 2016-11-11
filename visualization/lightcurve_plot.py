@@ -33,7 +33,7 @@ class LightCurvePlot:
 
             for sub_band in self.model:
                 subband_label = sub_band.replace('p', '.')
-                axis.plot(plotted_times, self.model[sub_band]['model'][plot_cut], color=color_modbg[sub_band], label=r'${0} \mu$m Model'.format(subband_label))
+                axis.plot(plotted_times, (self.model[sub_band]['model'].reshape(self.planet_object.time_resolution*self.planet_object.num_orbits))[plot_cut], color=color_modbg[sub_band], label=r'${0} \mu$m Model'.format(subband_label))
 
             band_label = band.replace('p', '.')
             axis.scatter(self.data[band]['t'], self.data[band]['flux'], color=color_datlab[band], label=r'${0} \mu$m Data'.format(band_label))
@@ -46,5 +46,5 @@ class LightCurvePlot:
             
             if save:
                 plt.tight_layout
-                plt.savefig('{0}_{1}_{2}.eps'.format(datetime.date.today(), self.planet_object.name, band))
+                plt.savefig('{0}_{1}_{2}.pdf'.format(datetime.date.today(), self.planet_object.name, band))
                 plt.cla()
