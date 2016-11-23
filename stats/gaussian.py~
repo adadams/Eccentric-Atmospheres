@@ -37,8 +37,6 @@ def log_likelihood(planet_object, data, spectral_array, model_function, paramete
 
             #Get the parameter values corresponding to that N-D index.
             parameter_sample = [par[j] for par, j in zip(parameters, idx)]
-            print i
-            print parameter_sample
 
             #The model light curve.
             model = model_function(parameter_sample, spectral_array)['model']
@@ -48,8 +46,8 @@ def log_likelihood(planet_object, data, spectral_array, model_function, paramete
             model_interps[idx] = interp_func(data['t'])
 
             #The interpolation might not have enough time resolution to catch the dips during eclipse and transit. Here we swap out the interpolated values during eclipses and transits with what the values should be.
-            model_interps[idx][flag_eclipse] = model_function(parameter_sample, spectral_array)['model'].T[eclipse_index]
-            model_interps[idx][flag_transit] = model_function(parameter_sample, spectral_array)['model'].T[transit_index]
+            model_interps[idx][flag_eclipse] = model_function(parameter_sample, spectral_array)['model'][eclipse_index]
+            model_interps[idx][flag_transit] = model_function(parameter_sample, spectral_array)['model'][transit_index]
 
             #Sum up the log likelihoods over time.
             log_likelihoods[idx] = N.einsum('...t->...', 0.5*((data['flux'] - model_interps[idx])/data_spread)**2)
@@ -72,6 +70,18 @@ def log_likelihood(planet_object, data, spectral_array, model_function, paramete
 
         #Sum up the log likelihoods over time.
         log_likelihoods = N.einsum('...t->...', 0.5*((data['flux'] - model_interps)/data_spread)**2)
+
+    #The "mcmc" option uses a Markov Chain Monte Carlo routine from the "emcee" package.
+    if opt == 'mcmc':
+        def lnlike(parameters, data, bandpass):
+            b, p, T, a = parameters
+            bs, ps, Ts = N.meshgrid(b, p, T)
+            planet.set_custom_parameters(beta=bs,
+                                         rotation_period=ps,
+                                         nightside_temperature=Ts)
+            planet.set_albedo(a)
+            temperatures(planet)
+            return planet.log_likelihood(data, bandpass, time_cut)['logl']
 
     #Return the index in the likelihood array corresponding to the smallest (most favorable) value.
     bestfit_index = N.unravel_index(N.argmin(log_likelihoods), search_dims)

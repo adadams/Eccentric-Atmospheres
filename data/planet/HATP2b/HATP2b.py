@@ -30,6 +30,6 @@ system_properties = {
          }
 
 #The directory for the data.
-data = {'3p6': N.genfromtxt('data/planet/HATP2b/lewis_3p6.txt', comments='#', names=True),
-        '4p5': N.genfromtxt('data/planet/HATP2b/lewis_4p5.txt', comments='#', names=True),
-        '8p0': N.genfromtxt('data/planet/HATP2b/lewis_8p0.txt', comments='#', names=True)}
+data = {'3p6': N.genfromtxt('data/planet/HATP2b/3p6_nov2016.csv', comments='#', delimiter=',', names=True),
+        '4p5': N.genfromtxt('data/planet/HATP2b/4p5_nov2016.csv', comments='#', delimiter=',', names=True),
+        '8p0': N.genfromtxt('data/planet/HATP2b/8p0_nov2016.csv', comments='#', delimiter=',', names=True)}

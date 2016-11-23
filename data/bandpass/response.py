@@ -6,6 +6,7 @@
 # Gives the observed flux ratios of planet to star given an input set of spectral responses from a telescope filter.
 
 import numpy as N
+import astropy.constants as C
 import astropy.units as U
 from astropy.analytic_functions import blackbody_lambda
 
@@ -15,8 +16,11 @@ from astropy.analytic_functions import blackbody_lambda
 def light_curve(planet_object,
                 temp_map,
                 spectral_array,
-                prot   = N.array([10])*U.h,
+                parameters,
                 nbins=None):
+    
+    prot, t1000, Tn, albedo = parameters
+    prot, t1000, Tn, albedo = N.meshgrid(prot, t1000, Tn, albedo)
     
     # The spectral array will have two columns, one for the wavelengths and one for the spectral response in units proportional to energy (i.e. electron count "weighted" by the wavelength).
     num_waves = N.shape(spectral_array)[0]
@@ -63,7 +67,7 @@ def visibility(planet_object,
     #Additionally, calculate trig functions ahead of time so they won't be computationally expensive in the loops.
     #This requires calculating the surface area in each cell.
     cos_theta = N.cos(planet_object.theta_range)
-    long_obs = ((1.5*N.pi + (2*N.pi*(planet_object.times/prot[...,N.newaxis]).decompose() - ((planet_object.w)/U.rad).decompose())) % (2*N.pi))*U.rad
+    long_obs = ((1.5*N.pi - (2*N.pi*(planet_object.times/prot[...,N.newaxis]).decompose() + ((planet_object.w)/U.rad).decompose())) % (2*N.pi))*U.rad
     eclipse_flag = planet_object.calculate_occultation(planet_object.times)['eclipse flag']
     
     #Create a mask that incorporates both the cell area and the angle from the observer. Any grid cell more than 90 deg in longitude from the observer-facing longitude will not be visible.
@@ -86,7 +90,8 @@ def observable_luminosity(planet_object,
                           contrast_ratio=False):
     
     #Calculates an array of specific intensities. This is the Planck function.
-    intensity = blackbody_lambda(wavelength, temp_map)
+    #intensity = blackbody_lambda(wavelength, temp_map)
+    intensity = (2 * C.h * C.c**2) / (wavelength**5) / (N.exp((C.h * C.c)/(wavelength * C.k_B * temp_map)) - 1) / U.sr
     
     #Since we're calling the phi values directly they need to be in assumed radian values. Theta only goes into trig functions so it just needs some angle unit.
     phi_step = ((planet_object.phi_range[1] - planet_object.phi_range[0])/U.rad).decompose()

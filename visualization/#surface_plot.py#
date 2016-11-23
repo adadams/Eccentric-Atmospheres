@@ -27,7 +27,7 @@ class SurfacePlot:
         self.map_min = N.nanmin(self.map_array) / self.map_array.unit
         self.map_max = N.nanmax(self.map_array) / self.map_array.unit
 
-        self.long_obs = ((1.5*N.pi - (2*N.pi*(self.times/self.rotation_period).decompose() + ((self.planet_object.w)/U.rad).decompose())) % (2*N.pi))*U.rad
+        self.long_obs = ((1.5*N.pi + (2*N.pi*(self.times/self.rotation_period).decompose() - ((self.planet_object.w)/U.rad).decompose())) % (2*N.pi))*U.rad
 
     def draw(self, axis=plt.gca()):
         #Direct focus to the desired axis.
@@ -58,7 +58,7 @@ class SurfacePlot:
         self.drawn_lines = self.projected_map.drawmeridians([ss_long], linewidth=3, dashes=[3,1])
             
     def update(self, i):
-        print "{0}: {1}".format(i, self.long_obs[i])
+        print i
         #Remove the existing color map.
         for c in self.globemap.findobj(): c.remove()
 
