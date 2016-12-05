@@ -31,3 +31,8 @@ system_properties = {
 
 #The directory for the data.
 data = {'4p5': N.genfromtxt('data/planet/HD209458b/HD209458_4p5.txt', comments='#', names=True)}
+
+for band in data:
+    data[band]['t'] = data[band]['t'] % 1
+    data[band]['t'] = N.where(data[band]['t'] > 0.5, data[band]['t'] - 1, data[band]['t'])
+    data[band]['t'] = data[band]['t'] * system_properties['orbital period']

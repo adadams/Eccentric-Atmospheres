@@ -1,5 +1,4 @@
-# Graph from HAT-P-2b, page 1
-t	flux
+#t	flux
 -32.52	-94.33
 -32.16	132.0
 -30.72	-37.73
