@@ -37,7 +37,6 @@ def log_likelihood(planet_object, data, spectral_array, model_function, paramete
 
             #Get the parameter values corresponding to that N-D index.
             parameter_sample = [par[j] for par, j in zip(parameters, idx)]
-            print i
             print parameter_sample
 
             #The model light curve.

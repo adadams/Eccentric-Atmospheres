@@ -45,7 +45,7 @@ class LightCurvePlot:
             axis.scatter(self.data[band]['t'], self.data[band]['flux'], color=color_datlab[band], label=r'${0} \mu$m Data'.format(band_label))
 
             axis.set_xlabel(r'$t$ (Days)')
-            axis.set_ylabel(r'$\left(F/F_\star\right)_{3.6 \mu\mathrm{m}}$')
+            axis.set_ylabel(r'$\left(F/F_\star\right)_{%s \mu\mathrm{m}}$' % band_label)
             axis.margins(0.05)
             axis.set_ylim([0.999, 1.0025])
             axis.legend(loc='upper center', fontsize=8, bbox_to_anchor=(0.5, 1.1), ncol=2, fancybox=True, shadow=True, title=r'$P_{{\mathrm{{rot}}}}\approx$ {0:.1g}, $t_{{\mathrm{{rad}}}} \sim$ {1:.2f}, $T_n=$ {2:.0f}, $A=$ {3:.2f}'.format(*self.parameters[band]))

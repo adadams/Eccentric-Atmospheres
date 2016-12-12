@@ -37,3 +37,6 @@ for band in data:
     data[band]['t'] = data[band]['t'] % 1
     data[band]['t'] = N.where(data[band]['t'] > 0.5, data[band]['t'] - 1, data[band]['t'])
     data[band]['t'] = data[band]['t'] * system_properties['orbital period']
+
+data['3p6']['flux'] = data['3p6']['flux'] / 0.999
+data['4p5']['flux'] = data['4p5']['flux'] / 0.9987

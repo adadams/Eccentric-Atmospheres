@@ -29,7 +29,9 @@ class MCMC:
     def lnlike(self, par_vals):
         pars = [[par]*unit for par, unit in zip(par_vals, self.units)]
 
-        return log_likelihood(self.planet_object, self.data, self.spectral_array, self.model_function, pars, opt='serial', quiet=True)['logl']
+        logl = N.array([log_likelihood(self.planet_object, d, s, self.model_function, pars, opt='serial', quiet=True)['logl'] for d, s in zip(self.data, self.spectral_array)])
+        #return log_likelihood(self.planet_object, self.data, self.spectral_array, self.model_function, pars, opt='serial', quiet=True)['logl']
+        return N.sum(logl, axis=0)
 
     def lnprob(self, par_vals):
         lp = self.lnprior(par_vals)
