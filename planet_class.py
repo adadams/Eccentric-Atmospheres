@@ -111,7 +111,7 @@ class Planet:
         E_end = E(f+df)%(2*N.pi*U.rad)
         half_transit_time = self.P/(2*N.pi) * (E_end/U.rad-self.e*N.sin(E_end)) - Te_t
 
-        transit = N.abs((times - Te_t)%self.P) < half_transit_time
+        transit = N.abs((times - Te_t + 0.5*half_transit_time)%self.P) < half_transit_time
 
         #Now for the secondary eclipse, which is at the opposite anomaly.
         f = f + N.pi*U.rad
@@ -121,7 +121,7 @@ class Planet:
         E_end = E(f+df)%(2*N.pi*U.rad)
         half_eclipse_time = self.P/(2*N.pi) * (E_end/U.rad-self.e*N.sin(E_end)) - Te_e
 
-        eclipse = N.abs((times - Te_e)%self.P) < half_eclipse_time
+        eclipse = N.abs((times - Te_e + 0.5*half_eclipse_time)%self.P) < half_eclipse_time
         
         return {'transit flag': transit, 'transit': Te_t, 'eclipse flag': eclipse, 'eclipse': Te_e}
 
