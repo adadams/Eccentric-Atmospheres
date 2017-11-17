@@ -8,7 +8,7 @@ import astropy.units as U
 
 #The published properties of the planetary system.
 system_properties = {
-    'name': 'HD80606b',
+    'name': 'HD 80606 b',
     #P
     'orbital period': 111.4367 * U.d,
     #a
@@ -30,9 +30,10 @@ system_properties = {
          }
 
 #The directory for the data.
-data = {'4p5': N.genfromtxt('data/planet/HD80606b/wit_4p5_alt.txt', comments='#', names=True),
-        '8p0': N.genfromtxt('data/planet/HD80606b/wit_8p0_alt.txt', comments='#', names=True)}
+data = {'4p5': N.genfromtxt('data/planet/HD80606b/hd80606_4p5.csv', comments='#', delimiter=',', names=True, dtype=(float, float, '|S1')),
+        '8p0': N.genfromtxt('data/planet/HD80606b/hd80606_8p0.csv', comments='#', delimiter=',', names=True, dtype=(float, float, '|S1'))}
 
+#Convert hours to days for the time dimension, and turn parts per million to a total/stellar ratio.
 for band in data:
     data[band]['t'] = data[band]['t'] / 24.
     data[band]['flux'] = data[band]['flux'] / 1.e6 + 1

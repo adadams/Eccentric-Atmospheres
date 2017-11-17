@@ -8,7 +8,7 @@ import astropy.units as U
 
 #The published properties of the planetary system.
 system_properties = {
-    'name': 'HD189733b',
+    'name': 'HD 189733 b',
     #P
     'orbital period': 2.218575143 * U.d,
     #a
@@ -30,13 +30,17 @@ system_properties = {
          }
 
 #The directory for the data.
-data = {'3p6': N.genfromtxt('data/planet/HD189733b/3p6.csv', comments='#', delimiter=',', names=True),
-        '4p5': N.genfromtxt('data/planet/HD189733b/4p5.csv', comments='#', delimiter=',', names=True)}
+data = {'3p6': N.genfromtxt('data/planet/HD189733b/hd189733b_3p6.csv', comments='#', delimiter=',', names=True, dtype=(float, float, '|S1')),
+        '4p5': N.genfromtxt('data/planet/HD189733b/hd189733b_4p5.csv', comments='#', delimiter=',', names=True, dtype=(float, float, '|S1')),
+        '8p0': N.genfromtxt('data/planet/HD189733b/hd189733b_8p0.csv', comments='#', delimiter=',', names=True, dtype=(float, float, '|S1'))}
 
+#The data should span -0.5 to 0.5 an orbital period, with t=0 defined as periastron passage. For circular orbits, we arbitrarily set the argument of periastron such that transit and periastron are simultaneous.
 for band in data:
     data[band]['t'] = data[band]['t'] % 1
     data[band]['t'] = N.where(data[band]['t'] > 0.5, data[band]['t'] - 1, data[band]['t'])
     data[band]['t'] = data[band]['t'] * system_properties['orbital period']
 
+#Normalize the eclipse depths to unity.
 data['3p6']['flux'] = data['3p6']['flux'] / 0.999
 data['4p5']['flux'] = data['4p5']['flux'] / 0.9987
+#8p0 doesn't need normalization.
