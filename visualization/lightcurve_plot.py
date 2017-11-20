@@ -74,6 +74,7 @@ class LightCurvePlot:
 
             x[band] = N.array(N.r_[t_set[band] - P/U.d, t_set[band], t_set[band] + P/U.d])
 
+            
             y_median[band] = N.tile(data_median, 3)
 
             #If we have a partial phase curve, don't draw the data contours as connected between orbits.
@@ -92,6 +93,12 @@ class LightCurvePlot:
                 y_high = N.tile(N.array(data_upper)[~occulted], 3)
                 low_smoothed[band] = inter.UnivariateSpline(x[band][~N.tile(occulted,3)], y_low, s=s[band])
                 high_smoothed[band] = inter.UnivariateSpline(x[band][~N.tile(occulted,3)], y_high, s=s[band])
+                
+                outliers_high = (y_high > high_smoothed[band](x[band][~N.tile(occulted,3)])) | (y_high < low_smoothed[band](x[band][~N.tile(occulted,3)]))
+                outliers_low = (y_low > high_smoothed[band](x[band][~N.tile(occulted,3)])) | (y_low < low_smoothed[band](x[band][~N.tile(occulted,3)]))
+                percent_in = 1 - (N.sum(outliers_high) + N.sum(outliers_low)) / (N.shape(y_high)[0] + N.shape(y_low)[0])
+                print(percent_in)
+                
                 x_smooth[band] = N.linspace(-0.5*P/U.d, 0.5*P/U.d, num=time_resolution)
                 lowerlim[band] = N.min([N.min(low_smoothed[band](x_smooth[band])), 1])
                 upperlim[band] = N.max([N.max(high_smoothed[band](x_smooth[band])), N.max(self.model[band]['model'])])
@@ -106,6 +113,8 @@ class LightCurvePlot:
             band_label = band.replace('p', '.')
             
             axis.plot(plotted_times, y_model[band], linewidth=2, color=color_modbg[band])
+            #axis.scatter(x[band][~N.tile(occulted,3)], y_low, color='red', label=r'${0} \mu$m Data'.format(band_label), marker=',', s=8, alpha=0.6, zorder=1)
+            #axis.scatter(x[band][~N.tile(occulted,3)], y_high, color='blue', label=r'${0} \mu$m Data'.format(band_label), marker=',', s=8, alpha=0.6, zorder=1)
             axis.scatter(x[band], y_median[band], color='k', label=r'${0} \mu$m Data'.format(band_label), marker=',', s=8, alpha=0.6, zorder=1)
             axis.fill_between(x_smooth[band], low_smoothed[band](x_smooth[band]), high_smoothed[band](x_smooth[band]), color=color_datlab[band], label=r'${0} \mu$m Data'.format(band_label), alpha=0.4)
 

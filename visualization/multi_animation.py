@@ -15,7 +15,7 @@ plt.rcParams['animation.ffmpeg_path'] = '/usr/local/bin/ffmpeg'
 # Produces an orbital top-down view and a projection of surface temperatures, animated.
 # The planet parameters MUST be set or determined beforehand.
 ########################################################### 
-def draw(planet_object, plot_objects, num_orbits):
+def draw(planet, plot_objects, num_orbits):
     
     #The class that gets used in the animation routine to update the visualized data for each time step.
     #The orbit points, star position, globe projection outline and temperature bounds are static.
@@ -37,12 +37,6 @@ def draw(planet_object, plot_objects, num_orbits):
         time_resolution = obj.time_resolution
         if len(plot_objects)>1: obj.draw_animate(axarr[i])
         else: obj.draw(axarr)
-
-    #orbit_plot = OrbitPlot(planet_object)
-    #orbit_plot.draw(axarr[0])
-
-    #surface_plot = SurfacePlot(planet_object, map_array, rotation_period)
-    #surface_plot.draw(axarr[1])
     
     #Makes everything fit on the plot.
     fig.tight_layout(pad=0.4, w_pad=0.5, h_pad=1.0)
@@ -58,4 +52,4 @@ def draw(planet_object, plot_objects, num_orbits):
     FFwriter = anim.FFMpegWriter()
 
     #Save the animation.
-    animation.save('{0}_{1}_animation.mp4'.format(datetime.date.today(), planet_object.name), writer=FFwriter)
+    animation.save('{0}_{1}_animation.mp4'.format(datetime.date.today(), planet.name), writer=FFwriter)

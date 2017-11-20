@@ -16,7 +16,7 @@ system_properties = {
     #e
     'eccentricity': 0.0447,
     #w
-    'argument of periastron': (272.7-180) * U.deg,
+    'argument of periastron': 272.7 * U.deg,
     #mp
     'planet mass': 1.43 * C.M_jup,
     #rp
