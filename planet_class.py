@@ -124,7 +124,14 @@ class Planet:
         #else: rot_per = rotation_period
         observer_longitude = ((0.5*N.pi - (2*N.pi*(time/rotation_period).decompose() + ((self.w)/U.rad).decompose())) % (2*N.pi))*U.rad
 
-        return observer_longitude   
+        return observer_longitude
+
+    ###########################################################
+    # Calculates the orbit-averaged equilibrium temperature for the planet, which only depends on the orbital semimajor axis and stellar temperature.
+    ########################################################### 
+    def orbital_equilibrium_temperature(self):
+
+        return self.Teff * N.sqrt(0.5*self.R/self.a)
 
     ###########################################################
     # Calculates the pseudosynchronous rotation period.

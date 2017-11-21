@@ -20,8 +20,8 @@ def light_curve(planet,
                 use_tidal_distortion=False,
                 nbins=None):
     
-    prot, t1000, Tn, albedo = parameters
-    prot, t1000, Tn, albedo = N.meshgrid(prot, t1000, Tn, albedo)
+    prot, trad_EQ, Tn, albedo = parameters
+    prot, trad_EQ, Tn, albedo = N.meshgrid(prot, trad_EQ, Tn, albedo)
 
     if use_tidal_distortion:
         tidal_axes = planet.tidal_deformation_axes()

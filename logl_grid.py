@@ -24,7 +24,7 @@ from thermal import blackbody as thermal_model
 
 # ##### Import the system properties and data of the desired planet (contained in a Python dictionary in a separate file).
 
-from data.planet.HD189733b import HD189733b as exoplanet
+from data.planet.HD209458b import HD209458b as exoplanet
 
 # ##### Import the instrumental response data (currently for the Spitzer IRAC bands) and the routine to convert surface temperatures to observed planet-star flux ratios in a given band.
 
@@ -50,11 +50,11 @@ planet.set_resolution(longitude_resolution = 72,
 
 # ##### Specify ranges to be used for the grid in parameter space to be sampled. Make sure that the rotation period is the first parameter. For the blackbody model one also specifies the radiative timescale at 1000 K, the "nightside" (baseline) temperature of the planet, and the global Bond albedo.
 
-prot = N.linspace(0.4, 1.5, num=2) * planet.pseudosynchronous_period()
-t1000 = N.linspace(0, 50, num=2)
-t1000[0] += 0.001
-Tn = N.linspace(500, 2000, num=2) * U.K
-albedo = N.linspace(0.0, 1.0, num=2)
+prot = N.linspace(0.1, 2.5, num=50) * planet.pseudosynchronous_period()
+t1000 = N.linspace(2, 100, num=50)
+#t1000[0] += 0.001
+Tn = N.linspace(1145.93, 2000, num=1) * U.K
+albedo = N.linspace(0.3829, 1.0, num=1)
 
 parameters = [prot, t1000*U.hr, Tn, albedo]
 
@@ -64,7 +64,7 @@ max_axis = N.argmax(search_dims)
 num_elements = N.prod(search_dims)
 
 #The above information allows us to determine how we should handle the search parallelization (in a broadcasting sense). Running each point in the grid in series is certainly the slowest, but running everything broadcast as one single array can throw memory errors if the number of elements is too high. Here we set an estimate of the maximum number of elements that will feasibly run at once, and break the original array into components of at most this size. We choose to break the array along the axis of greatest length (if multiple are equal, we choose the first of those).
-max_blocksize = 1000
+max_blocksize = 100
 num_chunks = int(N.ceil(num_elements/max_blocksize))
 
 if num_chunks > 1:
@@ -93,16 +93,18 @@ logls = {}
 for band in exoplanet.data:
     print("Band: {0} um".format(band.replace('p','.')))
     logls_parts = []
+    #Since we are splitting our original array into chunks, the resulting partitioned container will have its first dimension as the number of chunks. The subsequent dimensions match the dimensions of the parameter grid, which have their 1st and 2nd axes swapped via numpy's meshgrid. We swap them back here to preserve the position of the axis along which we originally split the array.
     for block in run_blocks:
-        logls_parts.append(log_likelihood(planet = planet,
-                                          data = exoplanet.data[band],
-                                          spectral_array = instrument.bandpass[band],
-                                          model_function = generate_model,
-                                          parameters = block,
-                                          opt = 'parallel'))
-    logls[band] = N.stack(logls_parts, axis=max_axis)
+        logls_parts.append(N.swapaxes(log_likelihood(planet = planet,
+                                                     data = exoplanet.data[band],
+                                                     spectral_array = instrument.bandpass[band],
+                                                     model_function = generate_model,
+                                                     parameters = block,opt = 'parallel')['logl'], 0,1))
+    logls[band] = N.concatenate(logls_parts, axis=max_axis+1)
+
+grid_dict = {'logl': logls, 'par': parameters}
 
 # ##### Option to save the output in a numpy array file.
 
 with open('files/{0}_{1}_grid.npy'.format(datetime.date.today(), planet.name), 'wb') as grid_file:
-    N.save(grid_file, logls)
+    N.save(grid_file, grid_dict)

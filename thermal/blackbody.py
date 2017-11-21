@@ -18,7 +18,6 @@ def equilibrium_temperatures4(planet,
     r = planet.a * (1-planet.e**2)/(1+planet.e*N.cos(planet.anomaly(planet.times)['true']))
     
     #Alpha is the attenuation factor due to the apparent angle of the star to the horizon at a given point on the planet. Set to zero on the night side.
-    #alpha = N.cos(planet.thetas) * N.cos( (-2*N.pi*U.rad*planet.times/prot[...,N.newaxis] + planet.anomaly(planet.times)['true'])[...,N.newaxis,N.newaxis] + planet.phis)
     sub_sol = planet.subsolar_longitude(planet.times, rotation_period = prot[...,N.newaxis])
     alpha = N.cos(planet.thetas) * N.cos(sub_sol[...,N.newaxis,N.newaxis] - planet.phis)
     alpha[alpha < 0] = 0
@@ -33,15 +32,15 @@ def equilibrium_temperatures4(planet,
 def temperatures(planet, 
                  parameters = [N.array([5])*U.h, N.array([10])*U.h, N.array([1000])*U.K, N.array([0.2])]):
 
-    prot, t1000, Tn, albedo = parameters
-    prot, t1000, Tn, albedo = N.meshgrid(prot, t1000, Tn, albedo)
+    prot, trad_EQ, Tn, albedo = parameters
+    prot, trad_EQ, Tn, albedo = N.meshgrid(prot, trad_EQ, Tn, albedo)
     
     eq_T4 = equilibrium_temperatures4(planet, prot, Tn, albedo)
     
     temperature_timeseries = []
     temperature_timeseries.append(N.einsum('...uv->uv...', Tn[...,N.newaxis,N.newaxis]/U.K * N.ones_like(planet.thetas/U.deg))*U.K)
 
-    trad = t1000 * ((1000*U.K)**4 / eq_T4)**0.75
+    trad = trad_EQ * ((planet.orbital_equilibrium_temperature()*U.K)**4 / eq_T4)**0.75
     timestep = planet.times[1] - planet.times[0]
 
     for t, time in enumerate(planet.times):
