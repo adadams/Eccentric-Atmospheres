@@ -40,7 +40,7 @@ def temperatures(planet,
     temperature_timeseries = []
     temperature_timeseries.append(N.einsum('...uv->uv...', Tn[...,N.newaxis,N.newaxis]/U.K * N.ones_like(planet.thetas/U.deg))*U.K)
 
-    trad = trad_EQ * ((planet.orbital_equilibrium_temperature()*U.K)**4 / eq_T4)**0.75
+    trad = trad_EQ * ((planet.orbital_equilibrium_temperature())**4 / eq_T4)**0.75
     timestep = planet.times[1] - planet.times[0]
 
     for t, time in enumerate(planet.times):
