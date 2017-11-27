@@ -94,21 +94,21 @@ class Planet:
         #Use the treatment described on the NASA Exoplanet Archive from Greg Laughlin to calculate time of central transit and duration.
         f = 0.5*N.pi*U.rad - self.w
         E = lambda x: 2 * N.arctan(N.sqrt((1-self.e)/(1+self.e)) * N.tan(0.5*x))
-        E_mid = E(f)%(2*N.pi*U.rad)
+        E_mid = E(f)
         Te_t = self.P/(2*N.pi) * (E_mid/U.rad-self.e*N.sin(E_mid))
         df = N.arcsin((self.R+self.rp)/self.a / (1-self.e*N.cos(E_mid)))
-        E_end = E(f+df)%(2*N.pi*U.rad)
-        half_transit_time = self.P/(2*N.pi) * (E_end/U.rad-self.e*N.sin(E_end)) - Te_t
+        E_end = E(f+df)
+        half_transit_time = (self.P/(2*N.pi) * (E_end/U.rad-self.e*N.sin(E_end)) - Te_t) % self.P
 
         transit = N.abs((times - Te_t + 0.5*half_transit_time)%self.P) < half_transit_time
 
         #Now for the secondary eclipse, which is at the opposite anomaly.
         f = f + N.pi*U.rad
-        E_mid = E(f)%(2*N.pi*U.rad)
+        E_mid = E(f)
         Te_e = self.P/(2*N.pi) * (E_mid/U.rad-self.e*N.sin(E_mid))
         df = N.arcsin((self.R+self.rp)/self.a / (1-self.e*N.cos(E_mid)))
-        E_end = E(f+df)%(2*N.pi*U.rad)
-        half_eclipse_time = self.P/(2*N.pi) * (E_end/U.rad-self.e*N.sin(E_end)) - Te_e
+        E_end = E(f+df)
+        half_eclipse_time = (self.P/(2*N.pi) * (E_end/U.rad-self.e*N.sin(E_end)) - Te_e) % self.P
 
         eclipse = N.abs((times - Te_e + 0.5*half_eclipse_time)%self.P) < half_eclipse_time
         

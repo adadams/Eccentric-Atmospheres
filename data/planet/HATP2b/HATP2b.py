@@ -33,3 +33,10 @@ system_properties = {
 data = {'3p6': N.genfromtxt('data/planet/HATP2b/hatp2b_3p6.csv', comments='#', delimiter=',', names=True, dtype=(float, float, '|S1')),
         '4p5': N.genfromtxt('data/planet/HATP2b/hatp2b_4p5.csv', comments='#', delimiter=',', names=True, dtype=(float, float, '|S1')),
         '8p0': N.genfromtxt('data/planet/HATP2b/hatp2b_8p0.csv', comments='#', delimiter=',', names=True, dtype=(float, float, '|S1'))}
+
+#The data should span -0.5 to 0.5 an orbital period, with t=0 defined as periastron passage. For circular orbits, we arbitrarily set the argument of periastron such that transit and periastron are simultaneous.
+for band in data:
+    data[band]['t'] = data[band]['t'] / system_properties['orbital period']
+    data[band]['t'] = data[band]['t'] % 1
+    data[band]['t'] = N.where(data[band]['t'] > 0.5, data[band]['t'] - 1, data[band]['t'])
+    data[band]['t'] = data[band]['t'] * system_properties['orbital period']
