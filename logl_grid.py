@@ -106,5 +106,7 @@ grid_dict = {'logl': logls, 'par': parameters}
 
 # ##### Option to save the output in a numpy array file.
 
-with open('files/{0}_{1}_grid.npy'.format(datetime.date.today(), planet.name), 'wb') as grid_file:
+planet_name = planet.name.replace(' ','')
+
+with open('files/{0}_{1}_grid.npy'.format(datetime.date.today(), planet_name), 'wb') as grid_file:
     N.save(grid_file, grid_dict)

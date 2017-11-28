@@ -115,8 +115,10 @@ else:
 
 # ##### Save MCMC outputs: the record of walker positions in parameter space, and the record of log likelihoods at those positions.
 
-with open('files/{0}_{1}_mcmc.npy'.format(datetime.date.today(), planet.name), 'wb') as mcmc_file:
+planet_name = planet.name.replace(' ','')
+
+with open('files/{0}_{1}_mcmc.npy'.format(datetime.date.today(), planet_name), 'wb') as mcmc_file:
     N.save(mcmc_file, samples)
 
-with open('files/{0}_{1}_mcmc_uncertainties.npy'.format(datetime.date.today(), planet.name), 'wb') as mcmc_uncert_file:
+with open('files/{0}_{1}_mcmc_uncertainties.npy'.format(datetime.date.today(), planet_name), 'wb') as mcmc_uncert_file:
     N.save(mcmc_uncert_file, uncertainties)
