@@ -122,7 +122,7 @@ class Planet:
 
         #if rotation_period == None: rot_per = self.p_rot
         #else: rot_per = rotation_period
-        observer_longitude = ((0.5*N.pi - (2*N.pi*(time/rotation_period).decompose() + ((self.w)/U.rad).decompose())) % (2*N.pi))*U.rad
+        observer_longitude = ((1.5*N.pi - (2*N.pi*((time+0.5*self.P)/rotation_period).decompose() + ((self.w)/U.rad).decompose())) % (2*N.pi))*U.rad
 
         return observer_longitude
 
