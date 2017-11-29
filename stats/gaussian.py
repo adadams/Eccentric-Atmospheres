@@ -26,10 +26,10 @@ def log_likelihood(planet, data, spectral_array, model_function, parameters, opt
     #Store the dimensions of the parameter ranges.
     search_dims = N.array([len(prange) for prange in parameters])
 
-    #This mask contains enough of the time data to include the final periastron-periastron orbit simulated. (The mask actually cuts from third-to-final apastron to final apastron, but we'll need some extra on either side for some phase overlap. Note that this requires one to generate at least 2 orbits for the model.
-    assert planet.num_orbits >= 2, \
-        'Number of orbits generated must be at least 2 for likelihood calculation.'
-    time_cut = (planet.times >= (planet.num_orbits-2.5)*planet.P) & (planet.times <= (planet.num_orbits-0.5)*planet.P)
+    #This mask contains enough of the time data to include the final periastron-periastron orbit simulated. (The mask actually cuts from third-to-final apastron to final apastron, but we'll need some extra on either side for some phase overlap. Note that this requires one to generate at least 3 orbits for the model.
+    assert planet.num_orbits >= 3, \
+        'Number of orbits generated must be at least 3 for likelihood calculation.'
+    time_cut = (planet.times >= (planet.num_orbits-3.5)*planet.P) & (planet.times <= (planet.num_orbits-0.5)*planet.P)
 
     #The "serial" option uses a for loop to fill the likelihood array.
     if opt == 'serial':
