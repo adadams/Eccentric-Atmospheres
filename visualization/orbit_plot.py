@@ -29,14 +29,14 @@ plt.rc('font', family='serif')
 
 class OrbitPlot:
 
-    def __init__(self, planet, data, time_resolution=None):
+    def __init__(self, planet, time_resolution=None):
         self.planet = planet
         P = planet.P
         e = planet.e
         a = planet.a
         P_PSR = planet.pseudosynchronous_period()
         
-        self.data = data
+        self.data = planet.data
         
         if time_resolution==None:
             self.time_resolution = planet.time_resolution

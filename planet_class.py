@@ -17,8 +17,9 @@ class Planet:
     ###########################################################
     # Initial function that takes in a dictionary of established orbital properties.
     ###########################################################   
-    def __init__(self, properties):
+    def __init__(self, directory):
 
+        properties = directory.system_properties
         self.name = properties['name']
         self.P = properties['orbital period']
         self.a = properties['semimajor axis']
@@ -29,6 +30,8 @@ class Planet:
         self.M = properties['stellar mass']
         self.R = properties['stellar radius']
         self.Teff = properties['stellar temperature']
+
+        self.data = directory.data
 
     ###########################################################
     # Set the spatial and time resolution for the model, and the number of orbits to run. Degrees for longitude and latitude is default.
