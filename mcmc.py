@@ -4,6 +4,8 @@
 
 # ##### The typical packages to import.
 
+import datetime
+
 import astropy.constants as C
 import astropy.units as U
 from astropy.analytic_functions import blackbody_lambda
@@ -11,8 +13,6 @@ import numpy as N
 
 import matplotlib
 from matplotlib import pyplot as plt
-
-import datetime
 
 # ##### The planet class contains all the methods used for the geometry of the planet-star system.:
 
@@ -22,9 +22,11 @@ from planet_class import Planet
 
 from thermal import blackbody as thermal_model
 
-# ##### Import the system properties and data of the desired planet (contained in a Python dictionary in a separate file).
+# ##### Import the system properties and data of the desired planet (contained in a Python dictionary in a separate file). Create a planet instance with the user-supplied system properties.
 
 from data.planet.GJ436b import GJ436b as exoplanet
+planet = Planet(exoplanet)
+print('{0} loaded as planet to model.'.format(planet.name))
 
 # ##### Import the instrumental response data (currently for the Spitzer IRAC bands) and the routine to convert surface temperatures to observed planet-star flux ratios in a given band.
 
@@ -36,18 +38,12 @@ from data.bandpass.response import light_curve
 from stats.gaussian import log_likelihood
 from stats.metropolis import MCMC
 
-# ##### Create a planet instance with the user-supplied system properties.
-
-planet = Planet(exoplanet.system_properties)
-
-print('{0} loaded as planet to model.'.format(planet.name))
-
 # ##### Specify the spatial and time resolution for the calculations, including the number of orbits to run.
 
 planet.set_resolution(longitude_resolution = 18,
                       latitude_resolution = 8,
                       time_resolution = 200,
-                      num_orbits = 2)
+                      num_orbits = 5)
 
 # ##### A wrapper function using the thermal model and light curve routines to start with a set of specified parameter values and return a light curve. This function will be passed to the statistical likelihood function. (Note: if modeling a planet with expected tidal distortion, consider setting "use_tidal_distortion" to True.)
 
@@ -69,12 +65,16 @@ def mcmc_prior(parameters):
     return lnp
 
 
-starting_position = {'values': N.array([0.35, 1.3, 589, 0.06]),
-                     'units': N.array([planet.pseudosynchronous_period(), U.hr, U.K, 1])}
+starting_position = {'3p6': {'values': N.array([0.78, 19.54, 996.4, 0.203]),
+                             'units': N.array([planet.pseudosynchronous_period(), U.hr, U.K, 1])},
+'4p5': {'values': N.array([0.78, 9.40, 1082.2, 0.611]),
+                             'units': N.array([planet.pseudosynchronous_period(), U.hr, U.K, 1])},
+'8p0': {'values': N.array([0.78, 1.40, 1188.6, 0.693]),
+                             'units': N.array([planet.pseudosynchronous_period(), U.hr, U.K, 1])}}
 
 num_walkers = 1
-num_steps = 10
-step_size = [0.05, 5, 100, 0.05]
+num_steps = 1500
+step_size = [0.05, 1, 100, 0.01]
 
 print('Starting MCMC optimization.')
 print('{0} walker(s) executing {1} steps per band.'.format(num_walkers, num_steps))
@@ -88,7 +88,7 @@ if simultaneous:
                       spectral_array = [instrument.bandpass[band] for band in exoplanet.data],
                       model_function = generate_model)
     mcmc_model.set_prior(mcmc_prior)
-    mcmc_model.set_initial_position(starting_position)
+    mcmc_model.set_initial_position(starting_position[band])
     samples = mcmc_model.run_samples(num_walkers=num_walkers, num_steps=num_steps, step_size=step_size)
 
 else:
@@ -102,11 +102,11 @@ else:
                                 spectral_array = [instrument.bandpass[band]],
                                 model_function = generate_model)
         mcmc_model[band].set_prior(mcmc_prior)
-        mcmc_model[band].set_initial_position(starting_position)   
+        mcmc_model[band].set_initial_position(starting_position[band])   
         samples[band] = mcmc_model[band].run_samples(num_walkers=num_walkers, num_steps=num_steps, step_size=step_size, annealing=True)
 
         final_position = {'values': samples[band]['pos'][-1][0],
-                          'units': starting_position['units']}
+                          'units': starting_position[band]['units']}
         print('Final position for {0} um: {1}'.format(band.replace('p', '.'), final_position['values']*final_position['units']))
         print('Starting MCMC chain for uncertainties.')
         print(final_position)

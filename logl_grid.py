@@ -4,6 +4,8 @@
 
 # ##### The typical packages to import.
 
+import datetime
+
 import astropy.constants as C
 import astropy.units as U
 from astropy.analytic_functions import blackbody_lambda
@@ -12,11 +14,11 @@ import numpy as N
 import matplotlib
 from matplotlib import pyplot as plt
 
-import datetime
-
-# ##### The planet class contains all the methods used for the geometry of the planet-star system.:
+# ##### The planet class contains all the methods used for the geometry of the planet-star system. Create a planet instance with the user-supplied system properties.
 
 from planet_class import Planet
+planet = Planet(exoplanet)
+print("{0} loaded as planet to model.".format(planet.name))
 
 # ##### Import the modules for the thermal model (currently a blackbody model).:
 
@@ -35,18 +37,12 @@ from data.bandpass.response import light_curve
 
 from stats.gaussian import log_likelihood
 
-# ##### Create a planet instance with the user-supplied system properties.
-
-planet = Planet(exoplanet.system_properties)
-
-print("{0} loaded as planet to model.".format(planet.name))
-
 # ##### Specify the spatial and time resolution for the calculations, including the number of orbits to run.
 
 planet.set_resolution(longitude_resolution = 72,
                       latitude_resolution = 36,
                       time_resolution = 200,
-                      num_orbits = 3)
+                      num_orbits = 5)
 
 # ##### Specify ranges to be used for the grid in parameter space to be sampled. Make sure that the rotation period is the first parameter. For the blackbody model one also specifies the radiative timescale at 1000 K, the "nightside" (baseline) temperature of the planet, and the global Bond albedo.
 
