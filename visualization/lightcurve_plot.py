@@ -18,10 +18,11 @@ import datetime
 
 class LightCurvePlot:
 
-    def __init__(self, planet, data, model, parameters):
+    def __init__(self, planet, data, model, uncertainty_models, parameters):
         self.planet = planet
         self.data = data
         self.model = model
+        self.uncertainty_models = uncertainty_models
         self.parameters = parameters
 
     def draw(self, axis, s, phase_overlap=0.25, filetypes=['eps', 'pdf', 'png'], combo=False, save=False):
@@ -41,6 +42,7 @@ class LightCurvePlot:
         low_smoothed = {}
         high_smoothed = {}
         y_model = {}
+        y_uncertainties = {}
         y_median = {}
         lowerlim = {}
         upperlim = {}
@@ -50,12 +52,13 @@ class LightCurvePlot:
             data_upper = []
             data_lower = []
             data_median = []
+            y_uncertainties[band] = []
 
             #The data may be sampled with multiple fluxes at a given time. We want a list of the unique times in the data for our x-axis.
             t_set[band], t_index = N.unique(self.data[band]['t'], return_index=True)
             #Boolean mask for whether the data point is in transit or eclipse.
             #occulted = self.planet.calculate_occultation(t_set[band]*U.d)['eclipse flag'] | self.planet.calculate_occultation(t_set[band]*U.d)['transit flag']
-            occulted = self.data[band]['occultation'][t_index] != b''
+            occulted = self.data[band]['occultation'][t_index] == b't'
             #Boolean mask for whether we consider the photometry a partial, rather than full, phase curve. I chose to call any light curve with a time range < 90% of the orbital period as "partial".
             partial_phase[band] = (N.max(t_set[band])-N.min(t_set[band]))*U.d/P < 0.8
             
@@ -69,36 +72,30 @@ class LightCurvePlot:
             #If we want some phase continuity on either side of the main plotted orbit light curve, we ideally want to take parts of the final 3 model orbits. If there are fewer than 3 orbits, tile the single-orbit model on either side. (This will probably result in discontinuities at the borders.)
             if num_orbits < 3:
                 y_model[band] = (self.model[band]['model'].reshape(time_resolution*num_orbits))[time_resolution*(num_orbits-1):]
+                for step in self.uncertainty_models[band]['model']:
+                    y_uncertainties[band].append((step.reshape(time_resolution*num_orbits))[time_resolution*(num_orbits-1):])
+                
             else:
                 y_model[band] = (self.model[band]['model'].reshape(time_resolution*num_orbits))[time_resolution*(num_orbits-3):]
+                for step in self.uncertainty_models[band]['model']:
+                    y_uncertainties[band].append((step.reshape(time_resolution*num_orbits))[time_resolution*(num_orbits-3):])
 
-            x[band] = N.array(N.r_[t_set[band] - P/U.d, t_set[band], t_set[band] + P/U.d])
+            x[band] = N.array(N.r_[t_set[band][~occulted] - P/U.d, t_set[band][~occulted], t_set[band][~occulted] + P/U.d])
 
-            
-            y_median[band] = N.tile(data_median, 3)
+            y_median[band] = N.tile(N.array(data_median)[~occulted], 3)
 
             #If we have a partial phase curve, don't draw the data contours as connected between orbits.
             if partial_phase[band]:
                 y_low = N.array(data_lower)[~occulted]
                 y_high = N.array(data_upper)[~occulted]
-                low_smoothed[band] = inter.UnivariateSpline(t_set[band][~occulted], y_low, s=s[band])
-                high_smoothed[band] = inter.UnivariateSpline(t_set[band][~occulted], y_high, s=s[band])
-                x_smooth[band] = N.linspace(N.min(t_set[band]), N.max(t_set[band]), num=time_resolution)
-                lowerlim[band] = N.min([N.min(low_smoothed[band](x_smooth[band])), 1])
-                upperlim[band] = N.max([N.max(high_smoothed[band](x_smooth[band])), N.max(self.model[band]['model'])])
 
             #For full phase curves we will draw connected contours.
             else:
                 y_low = N.tile(N.array(data_lower)[~occulted], 3)
                 y_high = N.tile(N.array(data_upper)[~occulted], 3)
-                low_smoothed[band] = inter.UnivariateSpline(x[band][~N.tile(occulted,3)], y_low, s=s[band])
-                high_smoothed[band] = inter.UnivariateSpline(x[band][~N.tile(occulted,3)], y_high, s=s[band])
-                x_smooth[band] = N.linspace(-0.5*P/U.d, 0.5*P/U.d, num=time_resolution)
-                lowerlim[band] = N.min([N.min(low_smoothed[band](x_smooth[band])), 1])
-                upperlim[band] = N.max([N.max(high_smoothed[band](x_smooth[band])), N.max(self.model[band]['model'])])
 
-        combo_lowerlim = N.min(list(lowerlim.values()))
-        combo_upperlim = N.max(list(upperlim.values()))
+        combo_lowerlim = N.min(y_low)
+        combo_upperlim = N.max(y_high)
 
         #Boolean for whether all available phase curves are partial phases.
         all_partial = N.all(list(partial_phase.values()))
@@ -107,8 +104,13 @@ class LightCurvePlot:
             band_label = band.replace('p', '.')
             
             axis.plot(plotted_times, y_model[band], linewidth=2, color=color_modbg[band])
+            uncertainty_counts = self.uncertainty_models[band]['count']
+            max_opacity = 0.75
+            opacities = max_opacity * uncertainty_counts / N.max(uncertainty_counts)
+            for alpha, uncert in zip(opacities, y_uncertainties[band]):
+                axis.plot(plotted_times, uncert, linewidth=2, color=color_datlab[band], alpha=alpha)
             axis.scatter(x[band], y_median[band], color='k', label=r'${0} \mu$m Data'.format(band_label), marker=',', s=8, alpha=0.6, zorder=1)
-            axis.fill_between(x_smooth[band], low_smoothed[band](x_smooth[band]), high_smoothed[band](x_smooth[band]), color=color_datlab[band], label=r'${0} \mu$m Data'.format(band_label), alpha=0.4)
+            axis.errorbar(x[band], y_median[band], yerr = [y_median[band]-y_low, y_high-y_median[band]], fmt='none', ecolor='0.4', linewidth=0.5)
 
             if ~combo & save:
 

@@ -11,9 +11,6 @@ import astropy.units as U
 from astropy.analytic_functions import blackbody_lambda
 import numpy as N
 
-import matplotlib
-from matplotlib import pyplot as plt
-
 # ##### The planet class contains all the methods used for the geometry of the planet-star system.:
 
 from planet_class import Planet
