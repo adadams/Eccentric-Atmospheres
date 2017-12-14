@@ -92,7 +92,7 @@ for name, planet in sorted(planets.items()):
 
 unique_models = {}
 for name, planet in planets.items():
-    if name != 'HD209458b':
+    if name == 'HD209458b':
         continue
     planet.set_resolution(longitude_resolution = 72,
                           latitude_resolution = 36,

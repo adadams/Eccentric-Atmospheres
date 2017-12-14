@@ -18,11 +18,12 @@ import datetime
 
 class LightCurvePlot:
 
-    def __init__(self, planet, data, model, uncertainty_models, parameters):
+    def __init__(self, planet, data, model, uncertainty_models, sigma_bounds, parameters):
         self.planet = planet
         self.data = data
         self.model = model
         self.uncertainty_models = uncertainty_models
+        self.sigma_bounds = sigma_bounds
         self.parameters = parameters
 
     def draw(self, axis, s, phase_overlap=0.25, filetypes=['eps', 'pdf', 'png'], combo=False, save=False):
@@ -42,7 +43,10 @@ class LightCurvePlot:
         low_smoothed = {}
         high_smoothed = {}
         y_model = {}
-        y_uncertainties = {}
+        y_lower1 = {}
+        y_upper1 = {}
+        y_lower2 = {}
+        y_upper2 = {}
         y_median = {}
         lowerlim = {}
         upperlim = {}
@@ -72,11 +76,17 @@ class LightCurvePlot:
             #If we want some phase continuity on either side of the main plotted orbit light curve, we ideally want to take parts of the final 3 model orbits. If there are fewer than 3 orbits, tile the single-orbit model on either side. (This will probably result in discontinuities at the borders.)
             if num_orbits < 3:
                 y_model[band] = (self.model[band]['model'].reshape(time_resolution*num_orbits))[time_resolution*(num_orbits-1):]
-                for step in self.uncertainty_models[band]['model']:
-                    y_uncertainties[band].append((step.reshape(time_resolution*num_orbits))[time_resolution*(num_orbits-1):])
+                y_lower1[band] = (self.sigma_bounds[band]['lower'][0].reshape(time_resolution*num_orbits))[time_resolution*(num_orbits-1):]
+                y_upper1[band] = (self.sigma_bounds[band]['upper'][0].reshape(time_resolution*num_orbits))[time_resolution*(num_orbits-1):]
+                y_lower2[band] = (self.sigma_bounds[band]['lower'][1].reshape(time_resolution*num_orbits))[time_resolution*(num_orbits-1):]
+                y_upper2[band] = (self.sigma_bounds[band]['upper'][1].reshape(time_resolution*num_orbits))[time_resolution*(num_orbits-1):]
                 
             else:
                 y_model[band] = (self.model[band]['model'].reshape(time_resolution*num_orbits))[time_resolution*(num_orbits-3):]
+                y_lower1[band] = (self.sigma_bounds[band]['lower'][0].reshape(time_resolution*num_orbits))[time_resolution*(num_orbits-3):]
+                y_upper1[band] = (self.sigma_bounds[band]['upper'][0].reshape(time_resolution*num_orbits))[time_resolution*(num_orbits-3):]
+                y_lower2[band] = (self.sigma_bounds[band]['lower'][1].reshape(time_resolution*num_orbits))[time_resolution*(num_orbits-3):]
+                y_upper2[band] = (self.sigma_bounds[band]['upper'][1].reshape(time_resolution*num_orbits))[time_resolution*(num_orbits-3):]
                 for step in self.uncertainty_models[band]['model']:
                     y_uncertainties[band].append((step.reshape(time_resolution*num_orbits))[time_resolution*(num_orbits-3):])
 
@@ -104,13 +114,13 @@ class LightCurvePlot:
             band_label = band.replace('p', '.')
             
             axis.plot(plotted_times, y_model[band], linewidth=2, color=color_modbg[band])
-            uncertainty_counts = self.uncertainty_models[band]['count']
-            max_opacity = 0.75
-            opacities = max_opacity * uncertainty_counts / N.max(uncertainty_counts)
-            for alpha, uncert in zip(opacities, y_uncertainties[band]):
-                axis.plot(plotted_times, uncert, linewidth=2, color=color_datlab[band], alpha=alpha)
+            axis.fill_between(plotted_times.value, y_lower1[band], y_upper1[band], color=color_datlab[band], label=r'1-$\sigma$ Bounds', alpha=0.6, lw=0)
+            axis.fill_between(plotted_times.value, y_lower2[band], y_upper2[band], color=color_datlab[band], label=r'2-$\sigma$ Bounds', alpha=0.3, lw=0)
+            #alpha = 0.01
+            #for uncert in y_uncertainties[band]:
+            #    axis.plot(plotted_times, uncert, linewidth=2, color=color_datlab[band], alpha=alpha)
             axis.scatter(x[band], y_median[band], color='k', label=r'${0} \mu$m Data'.format(band_label), marker=',', s=8, alpha=0.6, zorder=1)
-            axis.errorbar(x[band], y_median[band], yerr = [y_median[band]-y_low, y_high-y_median[band]], fmt='none', ecolor='0.4', linewidth=0.5)
+            #axis.errorbar(x[band], y_median[band], yerr = [y_median[band]-y_low, y_high-y_median[band]], fmt='none', ecolor='0.4', linewidth=0.5)
 
             if ~combo & save:
 
