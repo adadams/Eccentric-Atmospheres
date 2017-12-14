@@ -67,7 +67,7 @@ def generate_model(planet, parameters, spectral_array):
                         temp_map=temperature_map,
                         spectral_array=spectral_array,
                         parameters=parameters,
-                        use_tidal_distortion=True)
+                        use_tidal_distortion=False)
     return {'temp': temperature_map, 'model': model}
 
 
