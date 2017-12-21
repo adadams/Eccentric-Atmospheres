@@ -30,14 +30,12 @@ bandpasses = {**kepler.bandpass, **TwoMASS.bandpass, **spitzer_IRAC.bandpass}
 from planet_class import Planet
 
 
-# ##### Import the system properties and data of the planets (contained in Python dictionarys in a separate file), into a dictionary of planet classes. For some plots we just want to pick out a specific planet, which we specify here.
+# ##### Import the system properties and data of the planets (contained in Python dictionarys in a separate file), into a dictionary of planet classes.
 
 paths = [s.split('/')[-1] for s in glob('data/planet/*') if '__' not in s]
 planets = {}
 for path in paths:
     planets[path] = Planet(import_module('data.planet.{0}.{0}'.format(path)))
-
-specific_name = 'HD209458b'
 
 
 # ##### Import the module for the thermal model.
@@ -92,12 +90,12 @@ for name, planet in sorted(planets.items()):
 
 unique_models = {}
 for name, planet in planets.items():
-    if name == 'HD209458b':
-        continue
+    
     planet.set_resolution(longitude_resolution = 72,
                           latitude_resolution = 36,
                           time_resolution = 200,
                           num_orbits = 5)
+    
     unique_models[name] = {}
     for band in planet.data:
         try:
