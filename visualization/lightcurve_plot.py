@@ -18,21 +18,22 @@ import datetime
 
 class LightCurvePlot:
 
-    def __init__(self, planet, data, model, uncertainty_models, sigma_bounds, parameters):
+    def __init__(self, planet, data, model, sigma_bounds, parameters):
         self.planet = planet
         self.data = data
         self.model = model
-        self.uncertainty_models = uncertainty_models
         self.sigma_bounds = sigma_bounds
         self.parameters = parameters
 
-    def draw(self, axis, s, phase_overlap=0.25, filetypes=['eps', 'pdf', 'png'], combo=False, save=False):
+    def draw(self, axis, phase_overlap=0.25, filetypes=['eps', 'pdf', 'png'], combo=False, save=False):
         P = self.planet.P
         time_resolution = self.planet.time_resolution
+        sigma_resolution = self.sigma_bounds['resolution']
         num_orbits = self.planet.num_orbits
         
         #We could plot up to 3 full orbits. The main (center) orbit will be from -0.5 to 0.5 times the period, with t=0 representing periastrion passage.
         plotted_times = N.linspace(-1.5, stop=1.5, num=3*time_resolution)*P
+        sigma_times = N.linspace(-1.5, stop=1.5, num=3*sigma_resolution)*P
         #Time of mid-transit.
         transit_time = self.planet.calculate_occultation(self.planet.times)['transit']
 
@@ -56,7 +57,6 @@ class LightCurvePlot:
             data_upper = []
             data_lower = []
             data_median = []
-            y_uncertainties[band] = []
 
             #The data may be sampled with multiple fluxes at a given time. We want a list of the unique times in the data for our x-axis.
             t_set[band], t_index = N.unique(self.data[band]['t'], return_index=True)
@@ -69,43 +69,32 @@ class LightCurvePlot:
             #In order to create a contour representing the spread in the data, we would ideally like at least 2 sampled points per time: one representing the maximum, and other for minimum. The mean data points are generated from the averages, and will be the scatter points which are plotted.
             for t in t_set[band]:
                 flux_range = self.data[band]['flux'][self.data[band]['t']==t]
-                data_upper.append(N.max(flux_range))
-                data_lower.append(N.min(flux_range))
                 data_median.append(N.average(flux_range))
+                
+            data_upper.append(N.max(N.array(data_median)[~occulted]))
+            data_lower.append(N.min(N.array(data_median)[~occulted]))
                 
             #If we want some phase continuity on either side of the main plotted orbit light curve, we ideally want to take parts of the final 3 model orbits. If there are fewer than 3 orbits, tile the single-orbit model on either side. (This will probably result in discontinuities at the borders.)
             if num_orbits < 3:
                 y_model[band] = (self.model[band]['model'].reshape(time_resolution*num_orbits))[time_resolution*(num_orbits-1):]
-                y_lower1[band] = (self.sigma_bounds[band]['lower'][0].reshape(time_resolution*num_orbits))[time_resolution*(num_orbits-1):]
-                y_upper1[band] = (self.sigma_bounds[band]['upper'][0].reshape(time_resolution*num_orbits))[time_resolution*(num_orbits-1):]
-                y_lower2[band] = (self.sigma_bounds[band]['lower'][1].reshape(time_resolution*num_orbits))[time_resolution*(num_orbits-1):]
-                y_upper2[band] = (self.sigma_bounds[band]['upper'][1].reshape(time_resolution*num_orbits))[time_resolution*(num_orbits-1):]
+                y_lower1[band] = (self.sigma_bounds[band]['lower'][0].reshape(sigma_resolution*num_orbits))[sigma_resolution*(num_orbits-1):]
+                y_upper1[band] = (self.sigma_bounds[band]['upper'][0].reshape(sigma_resolution*num_orbits))[sigma_resolution*(num_orbits-1):]
+                y_lower2[band] = (self.sigma_bounds[band]['lower'][1].reshape(sigma_resolution*num_orbits))[sigma_resolution*(num_orbits-1):]
+                y_upper2[band] = (self.sigma_bounds[band]['upper'][1].reshape(sigma_resolution*num_orbits))[sigma_resolution*(num_orbits-1):]
                 
             else:
                 y_model[band] = (self.model[band]['model'].reshape(time_resolution*num_orbits))[time_resolution*(num_orbits-3):]
-                y_lower1[band] = (self.sigma_bounds[band]['lower'][0].reshape(time_resolution*num_orbits))[time_resolution*(num_orbits-3):]
-                y_upper1[band] = (self.sigma_bounds[band]['upper'][0].reshape(time_resolution*num_orbits))[time_resolution*(num_orbits-3):]
-                y_lower2[band] = (self.sigma_bounds[band]['lower'][1].reshape(time_resolution*num_orbits))[time_resolution*(num_orbits-3):]
-                y_upper2[band] = (self.sigma_bounds[band]['upper'][1].reshape(time_resolution*num_orbits))[time_resolution*(num_orbits-3):]
-                for step in self.uncertainty_models[band]['model']:
-                    y_uncertainties[band].append((step.reshape(time_resolution*num_orbits))[time_resolution*(num_orbits-3):])
+                y_lower1[band] = (self.sigma_bounds[band]['lower'][0].reshape(sigma_resolution*num_orbits))[sigma_resolution*(num_orbits-3):]
+                y_upper1[band] = (self.sigma_bounds[band]['upper'][0].reshape(sigma_resolution*num_orbits))[sigma_resolution*(num_orbits-3):]
+                y_lower2[band] = (self.sigma_bounds[band]['lower'][1].reshape(sigma_resolution*num_orbits))[sigma_resolution*(num_orbits-3):]
+                y_upper2[band] = (self.sigma_bounds[band]['upper'][1].reshape(sigma_resolution*num_orbits))[sigma_resolution*(num_orbits-3):]
 
-            x[band] = N.array(N.r_[t_set[band][~occulted] - P/U.d, t_set[band][~occulted], t_set[band][~occulted] + P/U.d])
+            x[band] = N.array(N.r_[t_set[band] - P/U.d, t_set[band], t_set[band] + P/U.d])
 
-            y_median[band] = N.tile(N.array(data_median)[~occulted], 3)
+            y_median[band] = N.tile(N.array(data_median), 3)
 
-            #If we have a partial phase curve, don't draw the data contours as connected between orbits.
-            if partial_phase[band]:
-                y_low = N.array(data_lower)[~occulted]
-                y_high = N.array(data_upper)[~occulted]
-
-            #For full phase curves we will draw connected contours.
-            else:
-                y_low = N.tile(N.array(data_lower)[~occulted], 3)
-                y_high = N.tile(N.array(data_upper)[~occulted], 3)
-
-        combo_lowerlim = N.min(y_low)
-        combo_upperlim = N.max(y_high)
+        combo_lowerlim = N.min(N.array(data_lower))
+        combo_upperlim = N.max(N.array(data_upper))
 
         #Boolean for whether all available phase curves are partial phases.
         all_partial = N.all(list(partial_phase.values()))
@@ -114,11 +103,8 @@ class LightCurvePlot:
             band_label = band.replace('p', '.')
             
             axis.plot(plotted_times, y_model[band], linewidth=2, color=color_modbg[band])
-            axis.fill_between(plotted_times.value, y_lower1[band], y_upper1[band], color=color_datlab[band], label=r'1-$\sigma$ Bounds', alpha=0.6, lw=0)
-            axis.fill_between(plotted_times.value, y_lower2[band], y_upper2[band], color=color_datlab[band], label=r'2-$\sigma$ Bounds', alpha=0.3, lw=0)
-            #alpha = 0.01
-            #for uncert in y_uncertainties[band]:
-            #    axis.plot(plotted_times, uncert, linewidth=2, color=color_datlab[band], alpha=alpha)
+            axis.fill_between(sigma_times.value, y_lower1[band], y_upper1[band], color=color_datlab[band], label=r'1-$\sigma$ Bounds', alpha=0.8, lw=0)
+            axis.fill_between(sigma_times.value, y_lower2[band], y_upper2[band], color=color_datlab[band], label=r'2-$\sigma$ Bounds', alpha=0.4, lw=0)
             axis.scatter(x[band], y_median[band], color='k', label=r'${0} \mu$m Data'.format(band_label), marker=',', s=8, alpha=0.6, zorder=1)
             #axis.errorbar(x[band], y_median[band], yerr = [y_median[band]-y_low, y_high-y_median[band]], fmt='none', ecolor='0.4', linewidth=0.5)
 
@@ -146,6 +132,7 @@ class LightCurvePlot:
                     plt.setp(axis.get_yticklabels(), fontsize=16)
                 else:
                     plt.setp(axis.get_yticklabels(), visible=False)
+
                 plot_lower = combo_lowerlim - 0.05*(combo_upperlim-combo_lowerlim)
                 plot_upper = combo_upperlim + 0.05*(combo_upperlim-combo_lowerlim)
                 axis.set_ylim([plot_lower, plot_upper])

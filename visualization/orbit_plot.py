@@ -78,8 +78,8 @@ class OrbitPlot:
             for i, band in enumerate(['3p6','4p5','8p0']):
                 if band in self.data:
                     t_set[band] = N.unique(self.data[band]['t'])
-                    data = t_set[band]%(P/U.d)
-                    band_range = N.array([N.any(N.abs(t-data) <= 0.5*P/U.d/self.time_resolution) for t in (self.times+0.5*P)/U.d])
+                    data = t_set[band]
+                    band_range = N.array([N.any(N.abs(t-data) <= 0.5*P/U.d/self.time_resolution) for t in self.times/U.d])
                     coverage = coverage | band_range
                     #The "stitch" is that the array for checking coverage has its first element overlapping with the last. So if either are covered, both should be covered.
                     coverage_stitch = coverage[0] | coverage[-1]
@@ -95,6 +95,7 @@ class OrbitPlot:
 
         peri_angle = ((self.planet.w + 180*U.deg)%(360*U.deg)).to(U.deg)
         orbit_outline = self.axis.add_artist(Ellipse(xy = (a*e*N.cos(peri_angle+180*U.deg), a*e*N.sin(peri_angle+180*U.deg)),
+        #orbit_outline = self.axis.add_artist(Ellipse(xy = (a*e*N.cos(peri_angle+0*U.deg), a*e*N.sin(peri_angle+0*U.deg)),
                                                      width = 2*a,
                                                      height = 2*a*N.sqrt(1-e**2),
                                                      angle = peri_angle.value,
@@ -104,7 +105,7 @@ class OrbitPlot:
         star_scale = float(self.planet.R/U.AU)
         #The color is calculated from the blackbody color at the effective temperature.
         star_color = cm.irgb_string_from_xyz(bb.blackbody_color(float(self.planet.Teff/U.K)))
-        limb_darkening_span = N.squeeze(N.array([colors.to_rgba_array(cm.irgb_string_from_xyz(bb.blackbody_color(T))) for T in N.linspace(0.5, 1, num=20)*self.planet.Teff/U.K]))
+        limb_darkening_span = N.squeeze(N.array([colors.to_rgba_array(cm.irgb_string_from_xyz(bb.blackbody_color(T))) for T in N.linspace(0.8, 1, num=20)*self.planet.Teff/U.K]))
 
         #star_point = axis.scatter(0, 0, color=star_color, s=star_scale, edgecolors='k')
         for n, shade in enumerate(limb_darkening_span[:,:-1]):
@@ -197,7 +198,7 @@ class OrbitPlot:
         #If we're plotting the whole orbit, the bounding box for the text showing the orbital period should be able to find room in the lower-right corner. Otherwise, there is a chance something could intersect it, and so we draw a white bounding box around it.
         if partial_phase: textbox_settings = dict(pad=0, fc='white', ec='white')
         else: textbox_settings = dict(pad=0, alpha=0)
-        axis.text(0.975, 0.05,'$P = $ {0:.3g}'.format(self.planet.P), horizontalalignment='right',
+        axis.text(0.975, 0.05,'$P = $ {0:.2f}'.format(self.planet.P), horizontalalignment='right',
                        verticalalignment='center',
                        transform=axis.transAxes,
                        fontproperties=fontprops,
