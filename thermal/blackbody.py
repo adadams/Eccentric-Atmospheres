@@ -41,12 +41,11 @@ def temperatures(planet,
     temperature_timeseries.append(N.einsum('...uv->uv...', Tn[...,N.newaxis,N.newaxis]/U.K * N.ones_like(planet.thetas/U.deg))*U.K)
 
     trad = trad_EQ * ((planet.orbital_equilibrium_temperature())**4 / eq_T4)**0.75
-    timestep = planet.times[1] - planet.times[0]
 
-    for t, time in enumerate(planet.times):
-        if t > 0:
-            dT = 0.25 * eq_T4[t]**0.25/trad[t] * (1 - temperature_timeseries[t-1]**4/eq_T4[t]) * timestep
-            evolved_temperatures = N.where(N.abs(dT)>N.abs(temperature_timeseries[t-1]-(eq_T4[t])**0.25), eq_T4[t]**0.25, temperature_timeseries[t-1]+dT)*U.K
-            temperature_timeseries.append(evolved_temperatures)
+    for n, (t1, t2) in enumerate(zip(planet.times[:-1], planet.times[1:])):
+        t = n + 1
+        dT = 0.25 * eq_T4[t]**0.25/trad[t] * (1 - temperature_timeseries[t-1]**4/eq_T4[t]) * (t2-t1)
+        evolved_temperatures = N.where(N.abs(dT)>N.abs(temperature_timeseries[t-1]-(eq_T4[t])**0.25), eq_T4[t]**0.25, temperature_timeseries[t-1]+dT)*U.K
+        temperature_timeseries.append(evolved_temperatures)
         
     return N.array(temperature_timeseries)*U.K

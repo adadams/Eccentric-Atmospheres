@@ -28,7 +28,9 @@ class MCMC:
     def lnlike(self, par_vals):
         pars = [[par]*unit for par, unit in zip(par_vals, self.units)]
 
-        logl = N.array([log_likelihood(self.planet, d, s, self.model_function, pars, opt='serial', quiet=True)['logl'] for d, s in zip(self.data, self.spectral_array)])
+        likelihoods = [log_likelihood(self.planet, d, s, self.model_function, pars, opt='serial', quiet=True) for d, s in zip(self.data, self.spectral_array)]
+        self.likelihoods = likelihoods
+        logl = N.array([l['logl'] for l in likelihoods])
         return N.sum(logl, axis=0)
 
     def lnprob(self, par_vals):

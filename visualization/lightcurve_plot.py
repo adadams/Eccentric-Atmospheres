@@ -13,9 +13,6 @@ from .style.colors import *
 
 import datetime
 
-#plt.rc('text', usetex=True)
-#plt.rc('font', family='serif')
-
 class LightCurvePlot:
 
     def __init__(self, planet, data, model, sigma_bounds, parameters):
@@ -32,25 +29,20 @@ class LightCurvePlot:
         num_orbits = self.planet.num_orbits
         
         #We could plot up to 3 full orbits. The main (center) orbit will be from -0.5 to 0.5 times the period, with t=0 representing periastrion passage.
-        plotted_times = N.linspace(-1.5, stop=1.5, num=3*time_resolution)*P
-        sigma_times = N.linspace(-1.5, stop=1.5, num=3*sigma_resolution)*P
+        plotted_times = self.planet.times[-3*time_resolution:] - (self.planet.times[-3*time_resolution] + 1.5*P)
+        sigma_times = self.sigma_bounds['times'][-3*sigma_resolution:] - (self.sigma_bounds['times'][-3*sigma_resolution] + 1.5*P)
         #Time of mid-transit.
         transit_time = self.planet.calculate_occultation(self.planet.times)['transit']
 
         t_set = {}
         partial_phase = {}
         x = {}
-        x_smooth = {}
-        low_smoothed = {}
-        high_smoothed = {}
         y_model = {}
         y_lower1 = {}
         y_upper1 = {}
         y_lower2 = {}
         y_upper2 = {}
         y_median = {}
-        lowerlim = {}
-        upperlim = {}
 
         for band in sorted(self.data):
             #Pull out upper and lower limits from carefully sampled data, which has multiple sampled points at each time.
@@ -66,7 +58,7 @@ class LightCurvePlot:
             #Boolean mask for whether we consider the photometry a partial, rather than full, phase curve. I chose to call any light curve with a time range < 90% of the orbital period as "partial".
             partial_phase[band] = (N.max(t_set[band])-N.min(t_set[band]))*U.d/P < 0.8
             
-            #In order to create a contour representing the spread in the data, we would ideally like at least 2 sampled points per time: one representing the maximum, and other for minimum. The mean data points are generated from the averages, and will be the scatter points which are plotted.
+            #In order to create a contour representing the spread in the models, we would ideally like at least 2 sampled points per time: one representing the maximum, and other for minimum. The mean data points are generated from the averages, and will be the scatter points which are plotted.
             for t in t_set[band]:
                 flux_range = self.data[band]['flux'][self.data[band]['t']==t]
                 data_median.append(N.average(flux_range))
@@ -106,7 +98,6 @@ class LightCurvePlot:
             axis.fill_between(sigma_times.value, y_lower1[band], y_upper1[band], color=color_datlab[band], label=r'1-$\sigma$ Bounds', alpha=0.8, lw=0)
             axis.fill_between(sigma_times.value, y_lower2[band], y_upper2[band], color=color_datlab[band], label=r'2-$\sigma$ Bounds', alpha=0.4, lw=0)
             axis.scatter(x[band], y_median[band], color='k', label=r'${0} \mu$m Data'.format(band_label), marker=',', s=8, alpha=0.6, zorder=1)
-            #axis.errorbar(x[band], y_median[band], yerr = [y_median[band]-y_low, y_high-y_median[band]], fmt='none', ecolor='0.4', linewidth=0.5)
 
             if ~combo & save:
 
