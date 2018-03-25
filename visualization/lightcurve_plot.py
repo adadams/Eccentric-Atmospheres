@@ -37,12 +37,14 @@ class LightCurvePlot:
         t_set = {}
         partial_phase = {}
         x = {}
+        x_occulted = {}
         y_model = {}
         y_lower1 = {}
         y_upper1 = {}
         y_lower2 = {}
         y_upper2 = {}
         y_median = {}
+        y_occulted = {}
 
         for band in sorted(self.data):
             #Pull out upper and lower limits from carefully sampled data, which has multiple sampled points at each time.
@@ -82,8 +84,10 @@ class LightCurvePlot:
                 y_upper2[band] = (self.sigma_bounds[band]['upper'][1].reshape(sigma_resolution*num_orbits))[sigma_resolution*(num_orbits-3):]
 
             x[band] = N.array(N.r_[t_set[band] - P/U.d, t_set[band], t_set[band] + P/U.d])
+            x_occulted[band] = x[band][N.tile(occulted, 3)]
 
             y_median[band] = N.tile(N.array(data_median), 3)
+            y_occulted[band] = y_median[band][N.tile(occulted, 3)]
 
         combo_lowerlim = N.min(N.array(data_lower))
         combo_upperlim = N.max(N.array(data_upper))
@@ -98,6 +102,7 @@ class LightCurvePlot:
             axis.fill_between(sigma_times.value, y_lower1[band], y_upper1[band], color=color_datlab[band], label=r'1-$\sigma$ Bounds', alpha=0.8, lw=0)
             axis.fill_between(sigma_times.value, y_lower2[band], y_upper2[band], color=color_datlab[band], label=r'2-$\sigma$ Bounds', alpha=0.4, lw=0)
             axis.scatter(x[band], y_median[band], color='k', label=r'${0} \mu$m Data'.format(band_label), marker=',', s=8, alpha=0.6, zorder=1)
+            axis.scatter(x_occulted[band], y_occulted[band], color='k', marker='o', s=32, alpha=0.3)
 
             if ~combo & save:
 

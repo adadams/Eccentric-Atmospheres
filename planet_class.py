@@ -31,10 +31,20 @@ class Planet:
         self.R = properties['stellar radius']
         self.Teff = properties['stellar temperature']
 
+        try:
+            self.l = properties['spin-orbit misalignment']
+        except:
+            self.l = N.nan
+        
+        try:
+            self.i = properties['inclination']
+        except:
+            self.i = 90*U.deg
+
         self.data = directory.data
 
     ###########################################################
-    # Set the spatial and time resolution for the model, and the number of orbits to run. Degrees for longitude and latitude is default.
+    # Set the spatial and time resolution for the model, and the number of orbits to run. Degrees for longitude and latitude is default. Theta is defined in the latitude convention (equator is zero), rather than polar angle convention.
     ###########################################################   
     def set_resolution(self,
                        longitude_resolution=360,

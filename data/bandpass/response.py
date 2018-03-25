@@ -73,7 +73,8 @@ def visibility(planet,
     #We need the longitudes that face the observer to determine what hemisphere of the globe is visible at a given time step.
     #Additionally, calculate trig functions ahead of time so they won't be computationally expensive in the loops.
     #This requires calculating the surface area in each cell.
-    cos_theta = N.cos((planet.theta_range[1:] + planet.theta_range[:-1])/2)
+    #cos_theta = N.cos((planet.theta_range[1:] + planet.theta_range[:-1])/2)
+    cos_theta = N.sin(planet.i-(planet.theta_range[1:] + planet.theta_range[:-1])/2)
     long_obs = planet.observer_longitude(planet.times, prot[...,N.newaxis])
     #long_obs = ((1.5*N.pi - (2*N.pi*(planet.times/prot[...,N.newaxis]).decompose() + ((planet.w)/U.rad).decompose())) % (2*N.pi))*U.rad
     eclipse_flag = planet.calculate_occultation(planet.times)['eclipse flag']

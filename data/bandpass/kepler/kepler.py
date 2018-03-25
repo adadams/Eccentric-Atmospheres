@@ -14,4 +14,4 @@ bandpass['KP']['wavelength'] /= 1000
 
 #Add an extra column in the dictionary data for the weighted response by the energy at each wavelength.
 for band in bandpass:
-    bandpass[band] = rfn.append_fields(bandpass[band], names='weighted_spectrum', data=bandpass[band]['response'] / U.nm.to(U.eV, bandpass[band]['wavelength'], equivalencies=U.spectral()), usemask=False)
+    bandpass[band] = rfn.append_fields(bandpass[band], names='weighted_spectrum', data=bandpass[band]['response'] / U.um.to(U.eV, bandpass[band]['wavelength'], equivalencies=U.spectral()), usemask=False)
