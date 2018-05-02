@@ -24,6 +24,8 @@ class LightCurvePlot:
 
     def draw(self, axis, phase_overlap=0.25, filetypes=['eps', 'pdf', 'png'], combo=False, save=False):
         P = self.planet.P
+        e = self.planet.e
+        w = self.planet.w
         time_resolution = self.planet.time_resolution
         sigma_resolution = self.sigma_bounds['resolution']
         num_orbits = self.planet.num_orbits
@@ -36,6 +38,7 @@ class LightCurvePlot:
 
         t_set = {}
         partial_phase = {}
+        spread = {band: 0 for band in sorted(self.data)}
         x = {}
         x_occulted = {}
         y_model = {}
@@ -63,10 +66,12 @@ class LightCurvePlot:
             #In order to create a contour representing the spread in the models, we would ideally like at least 2 sampled points per time: one representing the maximum, and other for minimum. The mean data points are generated from the averages, and will be the scatter points which are plotted.
             for t in t_set[band]:
                 flux_range = self.data[band]['flux'][self.data[band]['t']==t]
+                spread[band] += N.ptp(flux_range)
                 data_median.append(N.average(flux_range))
                 
             data_upper.append(N.max(N.array(data_median)[~occulted]))
             data_lower.append(N.min(N.array(data_median)[~occulted]))
+            spread[band] *= 0.5/len(t_set[band])
                 
             #If we want some phase continuity on either side of the main plotted orbit light curve, we ideally want to take parts of the final 3 model orbits. If there are fewer than 3 orbits, tile the single-orbit model on either side. (This will probably result in discontinuities at the borders.)
             if num_orbits < 3:
@@ -134,10 +139,19 @@ class LightCurvePlot:
                 axis.set_ylim([plot_lower, plot_upper])
                 
                 sig_place = N.floor(N.log10(plot_upper-1))
-                y_tickrange = N.linspace(1, (10**sig_place)*N.trunc(10**(-sig_place)*plot_upper), num=3)
+                y_tickrange = N.linspace(1, (10**sig_place)*N.round(10**(-sig_place)*plot_upper), num=3)
                 y_ticks = y_tickrange                
                 plt.yticks(y_ticks)
                 axis.yaxis.set_major_formatter(mpl.ticker.FormatStrFormatter('%1.4f'))
+                #Print sample error bars in a (relatively) unoccupied corner of the plot.
+                error_offset = 0.05
+                if (N.abs(w+90*U.deg)%(360*U.deg) <= 90*U.deg) or (e > 0.1):
+                    sample_x = x_min + (0.5*phase_overlap)/(1+2*phase_overlap)*(x_max-x_min)
+                    sample_y = N.max([plot_upper, y_tickrange[-1]]) - spread[band] - error_offset*(plot_upper-plot_lower)
+                else:
+                    sample_x = x_min + (0.5*phase_overlap)/(1+2*phase_overlap)*(x_max-x_min)
+                    sample_y = 1 + spread[band] + error_offset*(plot_upper-plot_lower)
+                axis.errorbar(x=sample_x, y=sample_y, xerr=spread[band], yerr=spread[band], fmt='x', mec='#666666', mfc='#666666', ms=4, ecolor='#666666', elinewidth=1, capsize=5, capthick=1)
                 
                 plt.setp(axis.get_xticklabels(), fontsize=16)
                 axis.margins(0.05)
